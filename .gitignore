@@ -1,0 +1,39 @@
+# AptGrocer project specific
+venv/
+__pycache__/
+instance/
+
+# Python files and directories
+*.pyc
+*.pyo
+*.pyd
+config/__pycache__/
+*.egg-info/
+dist/
+build/
+
+# Flask files and directories
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+*.egg-info/
+instance/
+migrations/
+*.log
+
+# Pytest files and directories
+.pytest_cache/
+htmlcov/
+
+# IDE files and directories
+.idea/
+*.iml
+
+# Static files and directories
+static/uploads/
+
+# Other files and directories
+.DS_Store
+*.swp
+*~
