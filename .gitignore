@@ -11,6 +11,7 @@ config/__pycache__/
 *.egg-info/
 dist/
 build/
+config/mongo_conn.py/
 
 # Flask files and directories
 *.pyc

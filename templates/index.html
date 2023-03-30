@@ -4,7 +4,7 @@
     Online Grocery Shopping
 {% endblock %}
 
-{% block head %}
+{% block body %}
     <!-- stylesheet -->
 	<link rel="stylesheet" href="{{ url_for('static', filename='css/product/index.css') }}">
 
@@ -14,9 +14,7 @@
 			window.location.href = `/product/id/${id}`;
 		}
 	</script>
-{% endblock %}
 
-{% block body %}
     <article>
         <h1>Welcome to Online Grocery Store</h1>
         <div class="col-md-12">

@@ -1,15 +1,13 @@
 {% extends "layout.html" %}
 
 {% block title %}
-    {{ product.title }} - AptGrocer
-{% endblock %}
-
-{% block head %}
-    <!-- stylesheet -->
-	<link rel="stylesheet" href="{{ url_for('static', filename='css/product/product-info.css') }}">
+    {{ product.title }}
 {% endblock %}
 
 {% block body %}
+    <!-- stylesheet -->
+	<link rel="stylesheet" href="{{ url_for('static', filename='css/product/product-info.css') }}">
+
     {% if product %}
         <!-- product info starts from here -->
         <article class="product info">

@@ -1,0 +1,123 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Create an Account
+{% endblock %}
+
+{% block body %}
+    <!-- stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/user-gui/user-auth.css') }}">
+
+    <!-- script -->
+    <script src="/static/js/user/auth/create-account.js"></script>
+
+    <!-- Create user starts from here -->
+    <article class="auth create-new-user">
+        <!-- user create new section starts from here -->
+        <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
+            <!-- user create new section starts from here -->
+            <div class="panel panel-default">
+                <div class="panel-heading" role="tab" id="create-new-head">
+                    <h1 class="panel-title">Create a new Account</h1>
+                </div>
+
+                <div id="create-new-panel" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="create-new-head">
+                    <div class="panel-body">
+                        <div class="col-md-12">
+                            <div class="row">
+                                <!-- user create new form starts from here -->
+                                <form id="form-user-create">
+                                    <!-- alert notification -->
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <div id="error-create" class="alert alert-danger hidden">
+                                                <i class="fa fa-close error" id="btn-error-close" onclick="close()"></i>
+                                                <strong id="error-create-message"></strong>
+                                            </div>
+
+                                            <div id="success-create" class="alert alert-success hidden">
+                                                <i class="fa fa-spinner fa-pulse fa-fw success"></i>
+                                                <strong>You're account has been created successfully! Now preparing your dashboard.</strong>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- username section -->
+                                    <div class="row">
+                                        <div class="col-md-4 col-md-offset-1 text-left">
+                                            <label for="name">Name</label>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <input type="text" class="form-control" name="name" id="name"/>
+                                        </div>
+                                    </div>
+
+                                    <!-- user email id section -->
+                                    <div class="row">
+                                        <div class="col-md-4 col-md-offset-1 text-left">
+                                            <label for="email">Email Id</label>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <input type="text" class="form-control" name="email" id="email"/>
+                                        </div>
+                                    </div>
+
+                                    <!-- user mobile section -->
+                                    <div class="row">
+                                        <div class="col-md-4 col-md-offset-1 text-left">
+                                            <label for="mobile">Contact Number</label>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <input type="text" class="form-control" name="mobile" id="mobile" maxlength="10"/>
+
+                                            <script>
+                                                const mobileInput = document.getElementById('mobile');
+                                                mobileInput.addEventListener('input', function(event) {
+                                                const currentValue = event.target.value;
+                                                const newValue = currentValue.replace(/\D/g, '');
+                                                event.target.value = newValue.slice(0, 10);
+                                              });
+                                            </script>
+                                        </div>
+                                    </div>
+
+                                    <!-- user password section -->
+                                    <div class="row">
+                                        <div class="col-md-4 col-md-offset-1 text-left">
+                                            <label for="password">Password</label>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <input type="password" class="form-control" name="password" id="password"/>
+                                        </div>
+                                    </div>
+
+                                    <!-- user confirm password section -->
+                                    <div class="row">
+                                        <div class="col-md-4 text-left col-md-offset-1">
+                                            <label for="confirm-password">Confirm Password</label>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <input type="password" class="form-control" id="confirm-password"/>
+                                        </div>
+                                    </div>
+
+                                    <!-- user submit form section -->
+                                    <input type="button" class="btn btn-default" id="btn-user-create" onclick="createAccount()" value="Create Account"/>
+                                </form>
+                                <!-- user create new form ends here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- user create new sections ends here -->
+        </div>
+        <!-- user create new section ends here -->
+    </article>
+    <!-- Create user ends here -->
+{% endblock %}
