@@ -8,6 +8,9 @@
     <!-- stylesheet -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/user-gui/user-auth.css') }}">
 
+    <!-- jQuery library -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
     <!-- script -->
     <script src="/static/js/user/auth/create-account.js"></script>
 
@@ -27,10 +30,11 @@
                             <div class="row">
                                 <!-- user create new form starts from here -->
                                 <form id="form-user-create">
+
                                     <!-- alert notification -->
                                     <div class="row">
                                         <div class="col-md-12">
-                                            <div id="error-create" class="alert alert-danger hidden">
+                                             <div id="error-create" class="alert alert-danger hidden">
                                                 <i class="fa fa-close error" id="btn-error-close" onclick="close()"></i>
                                                 <strong id="error-create-message"></strong>
                                             </div>
@@ -76,9 +80,9 @@
                                             <script>
                                                 const mobileInput = document.getElementById('mobile');
                                                 mobileInput.addEventListener('input', function(event) {
-                                                const currentValue = event.target.value;
-                                                const newValue = currentValue.replace(/\D/g, '');
-                                                event.target.value = newValue.slice(0, 10);
+                                                    const currentValue = event.target.value;
+                                                    const newValue = currentValue.replace(/\D/g, '');
+                                                    event.target.value = newValue.slice(0, 10);
                                               });
                                             </script>
                                         </div>
@@ -107,7 +111,7 @@
                                     </div>
 
                                     <!-- user submit form section -->
-                                    <input type="button" class="btn btn-default" id="btn-user-create" onclick="createAccount()" value="Create Account"/>
+                                    <input type="button" class="btn btn-default" id="btn-user-create" value="Create Account"/>
                                 </form>
                                 <!-- user create new form ends here -->
                             </div>

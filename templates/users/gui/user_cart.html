@@ -1,0 +1,165 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Dashboard | Payment Details
+{% endblock %}
+
+{% block body %}
+    <!-- stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/user-gui/user-dashboard.css') }}">
+
+    <!-- script -->
+    <script src="/static/js/user/gui/cart-settings.js"></script>
+
+    <!-- payment dashboard starts from here -->
+    <article class="dashboard cart">
+        <h1>Cart Review</h1>
+
+        <!-- user saved cart item section starts from here -->
+        <div class="left-panel">
+            <div class="panel panel-default">
+                <div class="panel-heading" id="head-saved-cart">
+                    <a role="button" data-parent="#accordion" aria-expanded="true" aria-controls="saved-cart-panel">
+                        <h2 class="panel-title">
+                            Item Details
+                        </h2>
+                    </a>
+                </div>
+
+                <div id="saved-cart-panel" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="head-saved-cart">
+                    <div class="panel-body">
+
+                        <!-- alert notification -->
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div id="success-cart-list" class="alert alert-success hidden">
+                                    <i class="fa fa-check success"></i>
+                                    Item has been removed successfully
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="saved-cart-list">
+                            {% if user.cart %}
+                                <div class="row b-margin cart-show carts">
+                                    <div class="col-md-3"></div>
+                                    <div class="col-md-3">Description</div>
+                                    <div class="col-md-2">Price</div>
+                                    <div class="col-md-1">Qty</div>
+                                    <div class="col-md-2">Total</div>
+                                </div>
+
+                                {% for product in user.cart %}
+                                    <div class="row b-margin cart-show carts">
+                                        <div class="col-md-3">
+                                            <img src="{{ product.images }}" alt="{{ product.title }}" height="100" width="120"/>
+                                        </div>
+
+                                        <div class="col-md-3">
+                                            <h3>{{ product.title }}</h3>
+                                            {{ product.size }}
+                                        </div>
+
+                                        <div class="col-md-2">
+                                            <i class="fa fa-dollar"></i>
+                                            {{ product.price }}
+                                        </div>
+
+                                        <div class="col-md-1">
+                                            <input id="quantity-{{ product._id }}" type="text" onblur="updateQty('{{ product._id }}')" class="form-control" onfocus="saveQty('{{ product._id }}')" value="{{ qty }}" maxlength="1"/>
+
+                                                <script>
+                                                    const inputElement = document.getElementById('quantity-{{ product._id }}');
+                                                    inputElement.addEventListener('keypress', (event) => {
+                                                        const charCode = event.key;
+                                                        if (charCode < '0' || charCode > '9') {
+                                                            event.preventDefault();
+                                                        }
+                                                    });
+                                                </script>
+                                        </div>
+
+                                        <div class="col-md-2">
+                                            <strong>
+                                                <i class="fa fa-dollar"></i>
+                                                {{ total }}
+                                            </strong>
+                                        </div>
+
+                                        <div class="col-md-1">
+                                            <i class="fa fa-trash delete" onclick="deleteCartItem('{{ product._id }}');" title="Delete"></i>
+                                        </div>
+
+                                    </div>
+
+                                    <input type="text" class="form-control hidden" id="quant-{{ product._id }}" disabled/>
+                                {% endfor %}
+                            {% else %}
+                                <div class="row">
+                                    <p class="msg">Cart is empty</p>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- user saved cart item sections ends here -->
+
+        <!-- user checkout cart item section starts from here -->
+        {% if user.cart %}
+            <div class="right-panel" id="summary">
+                <div class="panel panel-default">
+                    <div class="panel-heading" id="head-summary-cart">
+                        <a role="button" data-parent="#accordion" aria-expanded="true" aria-controls="summary-cart-panel">
+                            <h2 class="panel-title">
+                                Payment Summary
+                            </h2>
+                        </a>
+                    </div>
+
+                    <div id="summary-cart-panel" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="head-summary-cart">
+                        <div class="panel-body">
+
+                            <div class="row">
+                                <div class="col-md-6 col-md-offset-1"><label>Price</label></div>
+                                <div class="col-md-4 col-md-offset-1">
+                                    <i class="fa fa-dollar"></i>
+                                    <div class="cost-summary" id="total-cost">{{ total }}</div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 col-md-offset-1"><label>Taxes (@7%)</label></div>
+                                <div class="col-md-4 col-md-offset-1">
+                                    <i class="fa fa-dollar"></i>
+                                    <div class="cost-summary" id="tax-cost">{{ tax }}</div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 col-md-offset-1"><label>Total Price</label></div>
+                                <div class="col-md-4 col-md-offset-1">
+                                    <i class="fa fa-dollar"></i>
+                                    <div class="cost-summary" id="net-cost">{{ net }}</div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <form method="post" action="/payment/checkout" >
+                                        <input type="submit" class="btn btn-default" value="Checkout">
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+        <!-- user checkout item sections ends here -->
+
+    </article>
+    <!-- payment dashboard ends here -->
+{% endblock %}

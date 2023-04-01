@@ -1,4 +1,4 @@
-// subsctiption form validation
+// subscription form validation
 $(document).ready(function() {
 
 	// click on user login form button

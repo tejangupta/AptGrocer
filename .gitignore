@@ -5,21 +5,14 @@ instance/
 
 # Python files and directories
 *.pyc
-*.pyo
-*.pyd
 config/__pycache__/
 *.egg-info/
 dist/
 build/
-config/mongo_conn.py/
 
 # Flask files and directories
-*.pyc
 *.pyo
 *.pyd
-__pycache__/
-*.egg-info/
-instance/
 migrations/
 *.log
 
@@ -38,3 +31,4 @@ static/uploads/
 .DS_Store
 *.swp
 *~
+config/mongodb.env/

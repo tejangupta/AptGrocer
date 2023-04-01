@@ -1,0 +1,244 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Dashboard | Payment Details
+{% endblock %}
+
+{% block body %}
+    <!-- stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/user-gui/user-dashboard.css') }}">
+
+    <!-- script -->
+    <script src="/static/js/user/gui/card-settings.js"></script>
+
+    <!-- payment dashboard starts from here -->
+    <article class="dashboard payments">
+        <h1>Payment Settings</h1>
+
+        <!-- user saved card section starts from here -->
+        <div class="panel panel-default">
+            <div class="panel-heading" id="head-saved-card">
+                <a role="button" data-parent="#accordion" aria-expanded="true" aria-controls="saved-card-panel">
+                    <h2 class="panel-title">
+                        Saved Cards
+                    </h2>
+                </a>
+            </div>
+
+            <div id="saved-card-panel" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="head-saved-card">
+                <div class="panel-body">
+
+                    <!-- alert notification -->
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div id="success-card-list" class="alert alert-success hidden">
+                                <i class="fa fa-check success"></i>
+                                <strong>Card deleted successfully</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="saved-card-list">
+                        {% if user.card %}
+                            <div class="row card-show heading">
+                                <!-- card number -->
+                                <div class="col-md-3">
+                                    Card Number
+                                </div>
+
+                                <!-- card name -->
+                                <div class="col-md-3">
+                                    Card Holder
+                                </div>
+
+                                <!-- card expiry -->
+                                <div class="col-md-2">
+                                    Card Expiry
+                                </div>
+
+                                <!-- card type -->
+                                <div class="col-md-3">
+                                    Card Type
+                                </div>
+                            </div>
+
+                            {% for card in user.card %}
+                                <div class="row card-show cards">
+                                    <!-- card number -->
+                                    <div class="col-md-3">
+                                        {{ card._id }}
+                                    </div>
+
+                                    <!-- card name -->
+                                    <div class="col-md-3">
+                                        {{ card.name }}
+                                    </div>
+
+                                    <!-- card expiry -->
+                                    <div class="col-md-2">
+                                        {{ card.expiry }}
+                                    </div>
+
+                                    <!-- card expiry -->
+                                    <div class="col-md-3">
+                                        {{ card.type }}
+                                    </div>
+
+                                    <!-- card delete -->
+                                    <div class="col-md-1">
+                                        <i class="fa fa-trash" onclick="deleteCard({{ card._id }});" title="Delete"></i>
+                                        <!--i class="fa fa-trash" data-toggle="modal" data-target="#delete-alert" title="Delete"></i -->
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="row">
+                                <p class="msg">No saved cards</p>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        <!-- user saved card sections ends here -->
+
+        <!-- user add card section starts from here -->
+        <div class="panel panel-default">
+            <div class="panel-heading" id="add-card-head">
+                <a role="button" data-parent="#accordion" aria-expanded="true" aria-controls="add-card-panel">
+
+                    <h2 class="panel-title">
+                        Add Card
+                    </h2>
+                </a>
+            </div>
+
+            <div id="add-card-panel" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="add-card-head">
+                <div class="panel-body">
+
+                    <div class="col-md-12">
+                        <div class="row">
+
+                            <!-- user add payment detail form starts from here -->
+                            <form id="form-add-card">
+
+                                <!-- alert notification -->
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div id="error-add-card" class="alert alert-danger hidden">
+                                            <i class="fa fa-close error" id="btn-error-close" onclick="close()"></i>
+                                            <strong id="error-add-card-message"></strong>
+                                        </div>
+                                        <div id="success-add-card" class="alert alert-success hidden">
+                                            <i class="fa fa-check success"></i>
+                                            <strong>Card added successfully</strong>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- name on card section -->
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <label for="card-name">Name On Card</label>
+                                    </div>
+                                    <div class="col-md-6 col-md-offset-1">
+                                        <input type="text" class="form-control" name="cardName" id="card-name" placeholder="Card Holder's Name" />
+                                    </div>
+                                </div>
+
+                                <!-- card number section -->
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <label for="card-number">Card Number</label>
+                                    </div>
+                                    <div class="col-md-6 col-md-offset-1">
+                                        <input type="text" class="form-control" name="cardNumber" id="card-number" maxlength="16" placeholder="Card Number" />
+
+                                        <script>
+                                            const cardNumberInput = document.getElementById('card-number');
+                                            cardNumberInput.addEventListener('input', function(event) {
+                                                const currentValue = event.target.value;
+                                                const newValue = currentValue.replace(/\D/g, '');
+                                                event.target.value = newValue.slice(0, 16);
+                                              });
+                                        </script>
+                                    </div>
+                                </div>
+
+                                <!-- card type section -->
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <label for="card-type">Card Type</label>
+                                    </div>
+                                    <div class="col-md-6 col-md-offset-1">
+                                        <select class="btn btn-default" name="cardType" id="card-type">
+                                            <option selected disabled>Card Type</option>
+                                            <option value="Credit Card">Credit Card</option>
+                                            <option value="Debit Card">Debit Card</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- card expiry section -->
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <label for="card-month">Card Expiry</label>
+                                        <label for="card-year" class="hidden">Card Expiry</label>
+                                    </div>
+                                    <div class="col-md-6 col-md-offset-1">
+                                        <input type="number" class="form-control" name="cardMonth" id="card-month" min="1" max="12" placeholder="Month"/>
+                                        <input type="number" class="form-control" name="cardYear" id="card-year" min="2017" max="2051" placeholder="Year"/>
+                                    </div>
+                                </div>
+
+                                <!-- card brand section -->
+                                <!-- div class="row">
+                                    <div class="col-md-4">
+                                        <label for="card-brand">Card Issuer</label>
+                                    </div>
+                                    <div class="col-md-6 col-md-offset-1">
+                                        <select class="btn btn-default" name="cardBrand" id="card-brand">
+                                            <option selected disabled>Card Brand</option>
+                                            <option value="AmEx">American Express</option>
+                                            <option value="Master">Master</option>
+                                            <option value="Visa">Visa</option>
+                                        </select>
+                                    </div>
+                                </div -->
+
+                                <!-- card cvv section -->
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <label for="card-cvv">CVV</label>
+                                    </div>
+                                    <div class="col-md-6 col-md-offset-1">
+                                        <input type="password" class="form-control" name="cardCVV" id="card-cvv" placeholder="CVV Number" maxlength="4"/>
+
+                                        <script>
+                                            const cardCVVInput = document.getElementById('card-cvv');
+                                            cardCVVInput.addEventListener('input', function(event) {
+                                                const currentValue = event.target.value;
+                                                const newValue = currentValue.replace(/\D/g, '');
+                                                event.target.value = newValue.slice(0, 4);
+                                            });
+                                        </script>
+                                    </div>
+                                </div>
+
+                                <!-- user submit form section -->
+                                <input type="button" id="btn-add-card" class="btn btn-default" onclick="addCard()" value="Add" />
+
+                            </form>
+                            <!-- user add payment detail form ends here -->
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- user add card sections ends here -->
+
+    </article>
+    <!-- payment dashboard ends here -->
+{% endblock %}
