@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, session
+from flask import Flask, render_template, request, redirect, url_for, jsonify, session
 import secrets
 import string
 from bson import ObjectId
@@ -12,18 +12,27 @@ app.secret_key = 'my_super__secret_key'
 @app.route('/')
 def index():
     prods = coll.products.find()
-    return render_template('index.html', products=prods)
+
+    if session.get('user_id'):
+        return render_template('index.html', products=prods)
+    else:
+        user_id = ObjectId(session.get('user_id'))
+        user = coll.users.find_one({'_id': user_id})
+
+        return render_template('index.html', products=prods, user=user)
 
 
 @app.route('/product/id/<id>')
 def product(id):
+    user_id = ObjectId(session.get('user_id'))
+    user = coll.users.find_one({'_id': user_id})
+
     prod = coll.products.find_one({'_id': id})
-    return render_template('product/product_info.html', product=prod)
+    return render_template('product/product_info.html', product=prod, user=user)
 
 
 # Route to render the create new user form and create new user into database
 @app.route('/user/new', methods=['GET', 'POST'])
-@is_logged_in('/user/new')
 def create_new_user():
     if request.method == 'GET':
         return render_template('users/auth/create_new_account.html')
@@ -54,8 +63,7 @@ def create_new_user():
 
 
 @app.route('/user/login', methods=['GET', 'POST'])
-@is_logged_in()
-def user_login():
+def login():
     if request.method == 'GET':
         return render_template('users/auth/user_login_account.html')
     elif request.method == 'POST':
@@ -75,8 +83,18 @@ def user_login():
             return jsonify({'success': 'true', 'url': '/user/dashboard'})
 
 
+@app.route('/user/logout', methods=['POST'])
+@is_logged_in()
+def logout():
+    if request.method == 'POST':
+        user_id = session.get('user_id')
+        session.pop(user_id, None)
+
+        return redirect(url_for('index'))
+
+
 @app.route('/user/dashboard')
-@is_logged_in('/user/dashboard')
+@is_logged_in()
 def dashboard():
     user_id = ObjectId(session.get('user_id'))
     user = coll.users.find_one({'_id': user_id})
@@ -84,8 +102,13 @@ def dashboard():
     return render_template('users/gui/user_dashboard.html', user=user)
 
 
+# @app.route('/user/dashboard/cart')
+# # @is_logged_in()
+# def cart():
+#     pass
+#
+#
 @app.route('/user/forget-password', methods=['GET', 'POST'])
-@is_logged_in('/user/forget-password')
 def forget_password():
     if request.method == 'GET':
         return render_template('users/auth/user_forget_password.html')
