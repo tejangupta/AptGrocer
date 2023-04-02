@@ -27,15 +27,13 @@ $(document).ready(function() {
 							type: "POST",
 							dataType: "json",
 							data: JSON.stringify(formData),
-							success: function(data) {
-								if (data.status === 'success') {
-									$("#error-create").addClass("hidden")
-									$("#success-create").removeClass("hidden");
+							success: function() {
+								$("#error-create").addClass("hidden")
+								$("#success-create").removeClass("hidden");
 
-									setTimeout(() => {
-										window.location.href = "/user/dashboard";
+								setTimeout(() => {
+									window.location.href = "/";
 									}, 2500);
-								}
 							},
 							error: function (xhr) {
 								$("#success-create").addClass("hidden");

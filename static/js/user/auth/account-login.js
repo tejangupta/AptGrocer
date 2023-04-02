@@ -4,9 +4,8 @@ $(document).ready(function() {
 	// click on user login form button
     $("#btn-user-login").on('click', function() {
 		const regex = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/; 
-		const email = $("#email").val();
+		const email = $("#email").val().trim();
 		const password = $("#password").val();
-		const form = $("#form-user-login");
 
 		if (email.length > 0 && password.length > 0) {
 			if (regex.test(email)) {
@@ -29,7 +28,7 @@ $(document).ready(function() {
 							window.location.href = data.url;
 						}, 600);
 					},
-					error: function (xhr, ajaxOptions, thrownError) {
+					error: function (xhr) {
 						$("#success-login").addClass("hidden");
 						$("#error-login").removeClass("hidden");
         				

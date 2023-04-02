@@ -1,7 +1,11 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, session
+import secrets
+import string
 import config.mongo_coll as coll
+from config.auth import is_logged_in
 
 app = Flask(__name__)
+app.secret_key = 'my_super__secret_key'
 
 
 @app.route('/')
@@ -18,6 +22,7 @@ def product(id):
 
 # Route to render the create new user form and create new user into database
 @app.route('/user/new', methods=['GET', 'POST'])
+@is_logged_in('/user/new')
 def create_new_user():
     if request.method == 'GET':
         return render_template('users/auth/create_new_account.html')
@@ -44,7 +49,47 @@ def create_new_user():
             }
             coll.credentials.insert_one(new_credential)
 
-            return jsonify({'status': 'success'}), 200
+            return jsonify({'success': 'true'})
+
+
+@app.route('/user/login', methods=['GET', 'POST'])
+@is_logged_in()
+def user_login():
+    if request.method == 'GET':
+        return render_template('users/auth/user_login_account.html')
+    elif request.method == 'POST':
+        email = request.json['email'].lower()
+        password = request.json['password']
+
+        user = coll.credentials.find_one({'email': email})
+        if user is None:
+            return '', 404
+
+        if user['password'] != password:
+            return '', 400
+        else:
+            session['user_id'] = str(user['_id'])
+            session.modified = True
+
+            return jsonify({'success': 'true', 'url': '/user/dashboard'})
+
+
+@app.route('/user/forget-password', methods=['GET', 'POST'])
+@is_logged_in('/user/forget-password')
+def forget_password():
+    if request.method == 'GET':
+        return render_template('users/auth/user_forget_password.html')
+    elif request.method == 'POST':
+        email = request.json['email'].lower()
+
+        # Searching for an existing email
+        if coll.users.find_one({'email': email}) is None:
+            return '', 404
+        else:
+            new_password = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(8))
+            coll.credentials.update_one({'email': email}, {'$set': {'password': new_password}})
+
+            return jsonify({'success': 'true', 'email': email, 'password': new_password})
 
 
 if __name__ == '__main__':
