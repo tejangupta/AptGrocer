@@ -97,7 +97,13 @@
 
                             <div class="panel-collapse collapse in" role="tabpanel">
                                 <div class="panel-body">
-                                     <div class="col-md-12">{{ product.suggestion }}</div>
+                                     <div class="col-md-12">
+                                         <ul>
+                                             {% for suggestion in product.suggestion %}
+                                                 <li>{{ suggestion }}</li>
+                                             {% endfor %}
+                                        </ul>
+                                     </div>
                                 </div>
                             </div>
                         </div>
@@ -116,7 +122,13 @@
 
                             <div class="panel-collapse collapse in" role="tabpanel">
                                 <div class="panel-body">
-                                    <div class="col-md-12">{{ product.allegations }}</div>
+                                    <div class="col-md-12">
+                                        <ul>
+                                            {% for allegation in product.allegations %}
+                                                <li>{{ allegation }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
                                 </div>
                             </div>
                         </div>

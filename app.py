@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, jsonify, session
 import secrets
 import string
+from bson import ObjectId
 import config.mongo_coll as coll
 from config.auth import is_logged_in
 
@@ -61,17 +62,26 @@ def user_login():
         email = request.json['email'].lower()
         password = request.json['password']
 
-        user = coll.credentials.find_one({'email': email})
+        user = coll.users.find_one({'email': email})
         if user is None:
             return '', 404
 
-        if user['password'] != password:
+        if coll.credentials.find_one({'email': email})['password'] != password:
             return '', 400
         else:
             session['user_id'] = str(user['_id'])
             session.modified = True
 
             return jsonify({'success': 'true', 'url': '/user/dashboard'})
+
+
+@app.route('/user/dashboard')
+@is_logged_in('/user/dashboard')
+def dashboard():
+    user_id = ObjectId(session.get('user_id'))
+    user = coll.users.find_one({'_id': user_id})
+
+    return render_template('users/gui/user_dashboard.html', user=user)
 
 
 @app.route('/user/forget-password', methods=['GET', 'POST'])
