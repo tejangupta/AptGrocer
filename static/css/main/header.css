@@ -11,7 +11,7 @@ header i.fa { font-size: 1.8rem;margin-right: 1rem }
 .navbar-default .navbar-toggle:hover, .navbar-default .navbar-toggle:active, .navbar-default .navbar-toggle:focus { background-color: #fff; }
 .navbar-default .navbar-toggle:hover .icon-bar, .navbar-default .navbar-toggle:active .icon-bar, .navbar-default .navbar-toggle:focus .icon-bar { background-color: #337ab7; }
 
-header .navbar-form { width: 50%; }
+header .navbar-form { width: 50%; padding-left: 65px; }
 header .form-group { width: 85%; }
 header .navbar-form .form-control { width: 100%; }
 

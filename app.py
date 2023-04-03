@@ -1,9 +1,10 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify, session
 import secrets
 import string
+import uuid
 from bson import ObjectId
 import config.mongo_coll as coll
-from config.auth import is_logged_in
+from config.auth import is_logged_in, send_verification_email
 
 app = Flask(__name__)
 app.secret_key = 'my_super__secret_key'
@@ -14,21 +15,25 @@ def index():
     prods = coll.products.find()
 
     if session.get('user_id'):
-        return render_template('index.html', products=prods)
-    else:
         user_id = ObjectId(session.get('user_id'))
         user = coll.users.find_one({'_id': user_id})
 
         return render_template('index.html', products=prods, user=user)
+    else:
+        return render_template('index.html', products=prods)
 
 
 @app.route('/product/id/<id>')
 def product(id):
-    user_id = ObjectId(session.get('user_id'))
-    user = coll.users.find_one({'_id': user_id})
-
     prod = coll.products.find_one({'_id': id})
-    return render_template('product/product_info.html', product=prod, user=user)
+
+    if session.get('user_id'):
+        user_id = ObjectId(session.get('user_id'))
+        user = coll.users.find_one({'_id': user_id})
+
+        return render_template('product/product_info.html', product=prod, user=user)
+    else:
+        return render_template('product/product_info.html', product=prod)
 
 
 # Route to render the create new user form and create new user into database
@@ -43,23 +48,55 @@ def create_new_user():
         password = request.json['password']
 
         # Searching for an existing user
-        if coll.users.find_one({'email': email}) is not None:
+        existing_user = coll.users.find_one({'email': email})
+        if existing_user is not None:
             return '', 400
         else:
+            # Generate verification token for new user
+            verification_token = str(uuid.uuid4())
+
+            # Create new user with unverified status
             new_user = {
                 'name': name,
                 'email': email,
-                'mobile': mobile
+                'mobile': mobile,
+                'password': password,
+                'verified': False,
+                'verification_token': verification_token
             }
             coll.users.insert_one(new_user)
 
-            new_credential = {
-                'email': email,
-                'password': password
-            }
-            coll.credentials.insert_one(new_credential)
+            # Send verification email to the user's email address
+            send_verification_email(email, verification_token)
 
             return jsonify({'success': 'true'})
+
+
+@app.route('/verify_email/<verification_token>', methods=['GET'])
+def verify_email(verification_token):
+    user = coll.users.find_one({'verification_token': verification_token})
+    if user is not None:
+        if not user.get('verified', False):
+            user['verified'] = True
+            coll.users.replace_one({'_id': user['_id']}, user)
+
+            return render_template('alerts/success.html',
+                                   success='Email verified successfully',
+                                   code=200,
+                                   message='Email verified successfully!',
+                                   url=request.url)
+        else:
+            return render_template('alerts/error.html',
+                                   error='Email already verified',
+                                   url=request.url,
+                                   code='400 Bad Request',
+                                   message='Email already verified!')
+    else:
+        return render_template('alerts/error.html',
+                               error='Invalid verification token',
+                               url=request.url,
+                               code='400 Bad Request',
+                               message='Invalid verification token!')
 
 
 @app.route('/user/login', methods=['GET', 'POST'])
@@ -72,10 +109,11 @@ def login():
 
         user = coll.users.find_one({'email': email})
         if user is None:
-            return '', 404
-
-        if coll.credentials.find_one({'email': email})['password'] != password:
-            return '', 400
+            return jsonify({'message': 'This email id is not registered'}), 400
+        elif user['password'] != password:
+            return jsonify({'message': 'Incorrect password'}), 400
+        elif not user['verified']:
+            return jsonify({'message': 'You have not verified your email'}), 400
         else:
             session['user_id'] = str(user['_id'])
             session.modified = True
@@ -83,14 +121,24 @@ def login():
             return jsonify({'success': 'true', 'url': '/user/dashboard'})
 
 
-@app.route('/user/logout', methods=['POST'])
+@app.route('/user/logout', methods=['GET', 'POST'])
 @is_logged_in()
 def logout():
+    user_id = ObjectId(session.get('user_id'))
+    user = coll.users.find_one({'_id': user_id})
+
     if request.method == 'POST':
-        user_id = session.get('user_id')
-        session.pop(user_id, None)
+        session.pop('user_id', None)
 
         return redirect(url_for('index'))
+    elif request.method == 'GET':
+        return render_template('alerts/error.html',
+                               error='Invalid Logout Request - Must Use POST',
+                               url=request.url,
+                               code='405 Method Not Allowed',
+                               message='''The logout endpoint requires a POST request. Please use a POST request to log 
+                                       out of the system.''',
+                               user=user)
 
 
 @app.route('/user/dashboard')
@@ -102,12 +150,12 @@ def dashboard():
     return render_template('users/gui/user_dashboard.html', user=user)
 
 
-# @app.route('/user/dashboard/cart')
-# # @is_logged_in()
-# def cart():
-#     pass
-#
-#
+@app.route('/user/dashboard/cart')
+# @is_logged_in()
+def cart():
+    pass
+
+
 @app.route('/user/forget-password', methods=['GET', 'POST'])
 def forget_password():
     if request.method == 'GET':

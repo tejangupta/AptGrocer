@@ -32,3 +32,4 @@ static/uploads/
 *.swp
 *~
 config/mongodb.env/
+config/mail.env/

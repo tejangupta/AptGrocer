@@ -32,10 +32,9 @@ $(document).ready(function() {
 						$("#success-login").addClass("hidden");
 						$("#error-login").removeClass("hidden");
         				
-						if(xhr.status === 404) {	// receiving 404 status code
-							$("#error-login-message").html("This email id is not registered");
-						} else { 	// receiving 400 status code
-							$("#error-login-message").html("Incorrect password");
+						if(xhr.status === 400) {	// receiving 400 status code
+							const response = JSON.parse(xhr.responseText);
+							$("#error-login-message").html(response.message);
 						}
 					},
 					contentType: "application/json"
