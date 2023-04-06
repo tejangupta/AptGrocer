@@ -5,29 +5,9 @@
 {% endblock %}
 
 {% block body %}
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-md-8">
-                <!-- searched url -->
-                <div class="card mb-3">
-                    <div class="card-header">
-                        <h5 class="card-title">Server location:</h5>
-                    </div>
-                    <div class="card-body">
-                        <p class="card-text">{{ url }}</p>
-                    </div>
-                </div>
-
-                <!-- error code and message display -->
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="card-title">{{ code }}</h5>
-                    </div>
-                    <div class="card-body">
-                        <p class="card-text">{{ message }}</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <p>{{ message }}</p>
+    <p>URL: {{ url }}</p>
+    <p>Code: {{ code }}</p>
+    <br><br>
+    <img src="https://i.kym-cdn.com/entries/icons/mobile/000/026/489/crying.jpg" alt="A horror pic">
 {% endblock %}

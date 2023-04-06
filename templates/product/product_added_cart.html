@@ -1,7 +1,16 @@
 {% extends "layout.html" %}
 
 {% block title %}
-    Online Grocery Shopping
+    Item Added
+{% endblock %}
+
+{% block styles %}
+    {{ super() }}
+    <style>
+        #my-footer {
+            margin-top: 500px;
+        }
+    </style>
 {% endblock %}
 
 {% block body %}
@@ -27,7 +36,7 @@
                             <div class="col-md-6 col-md-offset-1">
                                 <div class="row">
                                     <form method="post" action="/payment/checkout">
-                                        <input type="submit" class="btn btn-default" value="Proceed to Checkout ({{ user.cartLen }})">
+                                        <input type="submit" class="btn btn-default" value="Proceed to Checkout ({{ cart.cart_length }})">
                                     </form>
                                 </div>
                             </div>

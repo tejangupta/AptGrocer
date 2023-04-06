@@ -17,6 +17,7 @@
         <link rel="stylesheet" href="{{ url_for('static', filename='css/alerts.css') }}">
         <link rel="stylesheet" href="{{ url_for('static', filename='css/main/header.css') }}">
         <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+        {% block styles %}{% endblock %}
 
         <!-- scripts -->
 		<script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
@@ -124,14 +125,14 @@
 
         <!--footer starts from here-->
 		<link rel="stylesheet" href="{{ url_for('static', filename='css/main/footer.css') }}">
-		<footer>
+		<footer id="my-footer">
 			<div class="container">
 				<div class="row">
 					<!-- about us starts from here -->
 					<div class="col-md-3">
 						<div class="row"><h3>About Project</h3></div>
 						<div class="row">
-							<p>AptGrocer Store is an eCommerce based web application. I had developed a sample in which user can search and find necessary information about any grocery item, can proceed to checkout to buy products.
+							<p>AptGrocer is an eCommerce based web application. I had developed a sample in which user can search and find necessary information about any grocery item, can proceed to checkout to buy products.
 								User can create an account, update personal information, can check its past activities, orders and transactions, and cart items.
 						</div>
 					</div>
@@ -216,10 +217,10 @@
 					<div class="col-md-3 col-md-offset-1">
 						<div class="row"><h3>Follow Me</h3></div>
 						<div class="row">
-							<div data-href="https://github.com/tejangupta/AptGrocer" data-tabs="repository" data-height="300" data-small-header="false" data-adapt-container-width="true" data-hide-cover="false" data-show-facepile="true">
-								<blockquote cite="https://github.com/tejangupta/AptGrocer">
+							<div data-href="https://github.com/tejangupta/" data-tabs="repository" data-height="300" data-small-header="false" data-adapt-container-width="true" data-hide-cover="false" data-show-facepile="true">
+								<blockquote cite="https://github.com/tejangupta/">
 									<i class="fa fa-github"></i>
-									<a href="https://github.com/tejangupta/AptGrocer" target="_blank">GitHub</a>
+									<a href="https://github.com/tejangupta/" target="_blank">GitHub</a>
 								</blockquote>
 							</div>
 						</div>

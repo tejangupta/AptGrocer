@@ -42,7 +42,7 @@ function updateQty(id) {
 				$(`#quantity-${id}`).val(hidden);
 			}
 /*		} else {
-			alert("Invalid quantity. It should be numberic only.");
+			alert("Invalid quantity. It should be numeric only.");
 		}
 */	} else {
 		alert("Quantity cannot be empty");

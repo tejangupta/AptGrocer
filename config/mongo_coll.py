@@ -8,10 +8,11 @@ def get_collection(collection):
 
 
 # Listing collections here:
-contacts = get_collection("contacts")
-credentials = get_collection("credentials")
-products = get_collection("products")
-subscriptions = get_collection("subscriptions")
-transaction_order = get_collection("orderTransaction")
-transaction_wallet = get_collection("walletTransaction")
-users = get_collection("users")
+contacts = get_collection('contacts')
+# credentials = get_collection('credentials')
+products = get_collection('products')
+subscriptions = get_collection('subscriptions')
+orderTransaction = get_collection('orderTransaction')
+walletTransaction = get_collection('walletTransaction')
+users = get_collection('users')
+usersCart = get_collection('usersCart')
