@@ -24,7 +24,7 @@ function updateQty(id) {
 					dataType: "json",
 					data: JSON.stringify(formData),
 					success: function(status) {
-						if (status.success == true) {
+						if (status.success === true) {
 							$("#saved-cart-list").load(location.href + " #saved-cart-list");
 							$("#cart-size").load(location.href + " #cart-size");
 							$("#total-cost").load(location.href + " #total-cost");

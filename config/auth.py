@@ -30,6 +30,10 @@ class EmailSender:
         body = f"Click the link to verify your email: http://127.0.0.1:5000/verify_email/{verification_token}\n\n"
         self.send_email('Verify Your Email', email, body)
 
+    def update_password_email(self, email, verification_token):
+        body = f'Click the link to update your password: http://127.0.0.1:5000/update_password/{verification_token}\n\n'
+        self.send_email('Update Password', email, body)
+
 
 def is_logged_in(redirect_url=None):
     def decorator(f):

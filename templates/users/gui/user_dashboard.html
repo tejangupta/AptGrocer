@@ -4,6 +4,15 @@
     Dashboard
 {% endblock %}
 
+{% block styles %}
+    {{ super() }}
+    <style>
+        #my-footer {
+            margin-top: 300px;
+        }
+    </style>
+{% endblock %}
+
 {% block body %}
     <!-- stylesheet -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/user-gui/user-dashboard.css') }}">

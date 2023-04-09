@@ -18,11 +18,9 @@ $(document).ready(function() {
 					type: "POST",
 					dataType: "json",
 					data: JSON.stringify(formData),
-					success: function(data) {
+					success: function() {
 						$("#error-forget").addClass("hidden");
 						$("#success-forget").removeClass("hidden");
-						$("#email").val("");
-						alert("New password for '" + data.email + "' is " + data.password);						
 					},
 					error: function (xhr) {
 						$("#success-forget").addClass("hidden");

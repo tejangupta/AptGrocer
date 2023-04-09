@@ -11,14 +11,14 @@ $(document).ready(function() {
 		$("#success-profile").addClass("hidden");
 
 		if (username.length > 0 && contact.length > 0) {
-			if (contact.length == 10) {
+			if (contact.length === 10) {
 				const formData = {
 					name: username,
 					mobile: contact
 				}
 
 				$.ajax({
-					url: "/user/update/info",
+					url: "/user/dashboard/account",
 					type: "POST",
 					dataType: "json",
 					data: JSON.stringify(formData),
@@ -62,12 +62,12 @@ $(document).ready(function() {
 				}
 
 				$.ajax({
-					url: "/user/update/info",
+					url: "/user/dashboard/account",
 					type: "POST",
 					dataType: "json",
 					data: JSON.stringify(formData),
 					success: function(status) {
-						if (status.success == true) {
+						if (status.success === true) {
 							$("#error-privacy").addClass("hidden");
 							$("#success-privacy").removeClass("hidden");
 						} else {
