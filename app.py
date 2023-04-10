@@ -40,6 +40,58 @@ def product(product_id):
         return render_template('product/product_info.html', product=prod)
 
 
+@app.route('/product/category/<category>')
+def products_by_category(category):
+    product_results = coll.products.find({'category': category.capitalize()})
+
+    if session.get('user_id'):
+        user_id = session['user_id']
+        user = coll.users.find_one({'_id': user_id})
+
+        if product_results:
+            return render_template("product/product_category_results.html",
+                                   mainTitle=f"{product_results[0]['category']} Products", user=user,
+                                   products=product_results, category=category)
+        else:
+            raise CustomError('Page Not Found', 404, f'Your search did not match any products in {category} category')
+    else:
+        if product_results:
+            return render_template("product/product_category_results.html",
+                                   mainTitle=f"{product_results[0]['category']} Products",
+                                   products=product_results, category=category)
+        else:
+            raise CustomError('Page Not Found', 404, f'Your search did not match any products in {category} category')
+
+
+@app.route("/product/search")
+def product_search():
+    keyword = request.args.get('keyword')
+
+    if keyword:
+        coll.products.create_index([('title', 'text'), ('description', 'text')])
+        product_search = coll.products.find({'$text': {'$search': keyword}})
+
+        if session.get('user_id'):
+            user_id = session['user_id']
+            user = coll.users.find_one({'_id': user_id})
+
+            if product_search:
+                return render_template("product/product_search_results.html", user=user,
+                                       mainTitle=f'{keyword}',
+                                       products=product_search, keyword=keyword)
+            else:
+                raise CustomError('Page Not Found', 404, 'Your search did not match any products.')
+        else:
+            if product_search:
+                return render_template("product/product_search_results.html",
+                                       mainTitle=f'{keyword}',
+                                       products=product_search, keyword=keyword)
+            else:
+                raise CustomError('Page Not Found', 404, 'Your search did not match any products.')
+    else:
+        return redirect('/')
+
+
 # Route to render the create new user form and create new user into database
 @app.route('/user/new', methods=['GET', 'POST'])
 def create_new_user():

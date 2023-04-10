@@ -48,7 +48,7 @@ $(function() {
 				dataType: "json",
 				data: JSON.stringify(formData),
 				success: function(data) {
-					if(data.empty == false) {
+					if(data.empty === false) {
 						let html = "";
 						for (var i = 0; i < data.product.length; i++) {
 							
