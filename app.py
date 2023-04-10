@@ -320,7 +320,7 @@ def update_user_info():
             name = user_updates.get('name')
             mobile = user_updates.get('mobile')
 
-            coll.users.update_one({'_id': user_id}, {'$set': {'name': name, 'alias': name.split()[0], 'mobile': mobile}})
+            coll.users.update_one({'_id': user_id}, {'$set': dict(name=name, alias=name.split()[0], mobile=mobile)})
 
             return jsonify(success=True)
         elif 'password' in user_updates and len(request.json['password']) > 0:
@@ -332,6 +332,59 @@ def update_user_info():
                 return jsonify({'success': 'false', 'error': 'New password should be different from previous password'})
 
             return jsonify(success=True)
+
+
+@app.route('/user/dashboard/payments', methods=['GET', 'POST', 'DELETE'])
+@is_logged_in()
+def update_user_card():
+    user_id = session.get('user_id')
+    user = coll.users.find_one({'_id': user_id})
+
+    if request.method == 'GET':
+        return render_template('users/gui/user_card.html', user=user)
+    elif request.method == 'POST':
+        user_updates = request.json
+        card_number = user_updates.get('number')
+
+        # Check if card already exists in user's card list
+        if any(card.get('_id') == card_number for card in user.get('card', [])):
+            return '', 400
+
+        # Add new card to user's card list
+        new_card = {
+            '_id': card_number,
+            'name': user_updates.get('username'),
+            'type': user_updates.get('type'),
+            'expiry': user_updates.get('exp'),
+            'cvv': user_updates.get('cvv')
+        }
+        coll.users.update_one({'_id': user_id}, {'$push': {'card': new_card}})
+
+        return jsonify({'success': 'true'})
+    elif request.method == 'DELETE':
+        user_updates = request.json
+        card_number = user_updates.get('cardNumber')
+        coll.users.update_one({'_id': user_id}, {'$pull': {'card': {'_id': str(card_number)}}})
+
+        return jsonify({'success': True})
+
+
+@app.route('/user/dashboard/order-history')
+@is_logged_in()
+def order_hist():
+    user_id = session.get('user_id')
+    user = coll.users.find_one({'_id': user_id})
+
+    transactions = coll.orderTransaction.find({'user': user_id})
+    transactions_list = []
+
+    for transaction in transactions:
+        transactions_list.append(transaction)
+
+    transactions_list.reverse()
+    transactions_list = transactions_list[:10]
+
+    return render_template('users/gui/user_order.html', user=user, transactions=transactions_list)
 
 
 @app.errorhandler(CustomError)

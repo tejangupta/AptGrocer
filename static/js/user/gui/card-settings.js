@@ -18,9 +18,9 @@ $(document).ready(function() {
 		if (cardName.length > 0 && cardNumber.length > 0 && expiryMonth.length > 0 && expiryYear.length > 0 && cvv.length > 0
 				&& cardType.length > 0 /*&& cardIssuer.length > 0*/) {
 
-			if (cardNumber.length == 16) {
+			if (cardNumber.length === 16) {
 				if ((expiryMonth >= 1  && expiryMonth <= 12) && (expiryYear >= 2017 && expiryYear <= 2051)) {
-					if((expiryYear == 2017 && expiryMonth > 4) || (expiryYear > 2017)) {
+					if((expiryYear === 2017 && expiryMonth > 4) || (expiryYear > 2017)) {
 						if ((cvv >= 1 && cvv <= 9999) && (cvv.length >= 3 && cvv.length <=4)) {
 
 							const formData = {
@@ -33,7 +33,7 @@ $(document).ready(function() {
 							}
 
 							$.ajax({
-								url: "/user/update/card",
+								url: "/user/dashboard/payments",
 								type: "POST",
 								dataType: "json",
 								data: JSON.stringify(formData),
@@ -107,7 +107,7 @@ function deleteCard(cardNumber) {
 	}
 
 	$.ajax({
-		url: "/user/update/card",
+		url: "/user/dashboard/payments",
 		type: "DELETE",
 		dataType: "json",
 		data: JSON.stringify(data),
@@ -122,4 +122,3 @@ function deleteCard(cardNumber) {
 		contentType: "application/json"
 	});
 }
-
