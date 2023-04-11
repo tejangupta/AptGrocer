@@ -27,7 +27,7 @@ $(document).ready(function() {
 							dataType: "json",
 							data: JSON.stringify(formData),
 							success: function(data) {
-								if (data.success == false) {
+								if (data.success === false) {
 									$("#success-wallet").addClass("hidden");
 									$("#error-wallet").removeClass("hidden");
 									$("#amount").val("");

@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify, session
 from datetime import datetime, timedelta
 import uuid
+import pymongo
 import config.mongo_coll as coll
 from config.auth import is_logged_in, EmailSender
 from config.exception import CustomError
@@ -92,6 +93,50 @@ def product_search():
         return redirect('/')
 
 
+@app.route('/product/search/filter', methods=['POST'])
+def product_filter_search():
+    if request.method == 'POST':
+        search = request.json['search']
+        start_range = float(request.json['startRange'])
+        end_range = float(request.json['endRange'])
+
+        filtered_products = coll.products.find({
+            '$and': [
+                {'$or': [
+                    {'title': {'$regex': search, '$options': 'i'}},
+                    {'description': {'$regex': search, '$options': 'i'}}
+                ]},
+                {'price': {'$gte': start_range}},
+                {'price': {'$lte': end_range}}
+            ]
+        })
+
+        if filtered_products:
+            return jsonify({'empty': False, 'product': list(filtered_products)})
+        else:
+            return jsonify({'empty': True})
+
+
+@app.route('/product/filter', methods=['POST'])
+def product_filter():
+    if request.method == 'POST':
+        category = request.json['category']
+        start_range = float(request.json['startRange'])
+        end_range = float(request.json['endRange'])
+        filtered_products = coll.products.find({
+            '$and': [
+                {'category': category.capitalize()},
+                {'price': {'$gte': start_range}},
+                {'price': {'$lte': end_range}}
+            ]
+        })
+
+        if filtered_products:
+            return jsonify({'empty': False, 'product': list(filtered_products)})
+        else:
+            return jsonify({'empty': True})
+
+
 # Route to render the create new user form and create new user into database
 @app.route('/user/new', methods=['GET', 'POST'])
 def create_new_user():
@@ -176,6 +221,53 @@ def login():
             return jsonify({'success': 'true', 'url': '/user/dashboard'})
 
 
+@app.route('/user/forget-password', methods=['GET', 'POST'])
+def forget_password():
+    if request.method == 'GET':
+        return render_template('users/auth/user_forget_password.html')
+    elif request.method == 'POST':
+        email = request.json['email'].lower()
+
+        # Searching for an existing email
+        if coll.users.find_one({'_id': email}) is None:
+            return '', 404
+        else:
+            verification_token = str(uuid.uuid4())
+            expiry_time = datetime.utcnow() + timedelta(minutes=10)
+
+            # Update the credentials collection with the verification token and expiry time
+            coll.credentials.update_one({'_id': email}, {
+                '$set': {'verification_token': verification_token, 'expiry_time': expiry_time}})
+
+            # Send email to update password
+            email_sender.update_password_email(email, verification_token)
+
+            return jsonify({'success': 'true'})
+
+
+@app.route('/update_password/<verification_token>', methods=['GET', 'POST'])
+def update_password(verification_token):
+    user = coll.credentials.find_one({'verification_token': verification_token})
+    if user:
+        expiry_time = user.get('expiry_time')
+        if expiry_time is not None and expiry_time < datetime.utcnow():
+            # Token has expired
+            raise CustomError('Bad Request', 400, 'Verification token has expired!')
+        else:
+            # Token is valid, allow user to update password
+            if request.method == 'GET':
+                return render_template('users/auth/enter_new_password.html')
+            elif request.method == 'POST':
+                new_password = request.json['password']
+
+                coll.credentials.update_one({'_id': user['_id']},
+                                            {'$set': {'password': new_password}, '$unset': {'verification_token': ""}})
+
+                return jsonify({'success': 'true'})
+    else:
+        raise CustomError('Bad Request', 400, 'Invalid verification token!')
+
+
 @app.route('/user/logout', methods=['GET', 'POST'])
 @is_logged_in()
 def logout():
@@ -194,6 +286,81 @@ def dashboard():
     user = coll.users.find_one({'_id': user_id})
 
     return render_template('users/gui/user_dashboard.html', user=user)
+
+
+@app.route('/user/dashboard/account', methods=['GET', 'POST'])
+@is_logged_in()
+def update_user_info():
+    user_id = session.get('user_id')
+    user = coll.users.find_one({'_id': user_id})
+
+    if request.method == 'GET':
+        return render_template('users/gui/user_account.html', user=user)
+    elif request.method == 'POST':
+        user_updates = request.json
+
+        if 'name' in user_updates and 'mobile' in user_updates:
+            name = user_updates.get('name')
+            mobile = user_updates.get('mobile')
+
+            coll.users.update_one({'_id': user_id}, {'$set': dict(name=name, alias=name.split()[0], mobile=mobile)})
+
+            return jsonify(success=True)
+        elif 'password' in user_updates and len(request.json['password']) > 0:
+            password = user_updates.get('password')
+            current_password = coll.credentials.find_one({'_id': user_id})['password']
+            if password != current_password:
+                coll.credentials.update_one({'_id': user_id}, {'$set': {'password': password}})
+            else:
+                return jsonify({'success': 'false', 'error': 'New password should be different from previous password'})
+
+            return jsonify(success=True)
+
+
+@app.route('/user/dashboard/payments', methods=['GET', 'POST', 'DELETE'])
+@is_logged_in()
+def update_user_card():
+    user_id = session.get('user_id')
+    user = coll.users.find_one({'_id': user_id})
+
+    if request.method == 'GET':
+        return render_template('users/gui/user_card.html', user=user)
+    elif request.method == 'POST':
+        user_updates = request.json
+        card_number = user_updates.get('number')
+
+        # Check if card already exists in user's card list
+        if any(card.get('_id') == card_number for card in user.get('card', [])):
+            return '', 400
+
+        # Add new card to user's card list
+        new_card = {
+            '_id': card_number,
+            'name': user_updates.get('username'),
+            'type': user_updates.get('type'),
+            'expiry': user_updates.get('exp'),
+            'cvv': user_updates.get('cvv')
+        }
+        coll.users.update_one({'_id': user_id}, {'$push': {'card': new_card}})
+
+        return jsonify({'success': 'true'})
+    elif request.method == 'DELETE':
+        user_updates = request.json
+        card_number = user_updates.get('cardNumber')
+        coll.users.update_one({'_id': user_id}, {'$pull': {'card': {'_id': str(card_number)}}})
+
+        return jsonify({'success': True})
+
+
+@app.route('/user/dashboard/order-history')
+@is_logged_in()
+def order_hist():
+    user_id = session.get('user_id')
+    user = coll.users.find_one({'_id': user_id})
+
+    transactions_list = list(coll.orderTransaction.find({'user': user['_id']}).sort('_id', -1).limit(10))
+
+    return render_template('users/gui/user_order.html', user=user, transactions=transactions_list)
 
 
 @app.route('/user/update/cart/<product_id>/<loc>', methods=['POST'])
@@ -310,133 +477,57 @@ def cart():
     return render_template('users/gui/user_cart.html', user=user, total=total_cost, tax=taxes, net=net_cost)
 
 
-@app.route('/user/forget-password', methods=['GET', 'POST'])
-def forget_password():
-    if request.method == 'GET':
-        return render_template('users/auth/user_forget_password.html')
-    elif request.method == 'POST':
-        email = request.json['email'].lower()
+@app.route('/user/dashboard/wallet', methods=['GET', 'POST'])
+@is_logged_in()
+def user_wallet():
+    user_id = session.get('user_id')
+    user = coll.users.find_one({'_id': user_id})
 
-        # Searching for an existing email
-        if coll.users.find_one({'_id': email}) is None:
-            return '', 404
+    if request.method == 'GET':
+        wallet_transactions = coll.walletTransaction.find({'user': user['_id']}).sort('date', pymongo.DESCENDING).limit(
+            10)
+
+        return render_template('users/gui/user_wallet.html', user=user, transactions=wallet_transactions)
+    elif request.method == 'POST':
+        amount = request.json['amount']
+
+        if not amount:
+            raise CustomError('Bad Request', 400, 'No amount provided')
+
+        discount_amt = taxes_amt = 0
+        net_amt = amount - discount_amt + taxes_amt
+
+        return render_template('payment/add_cash_payment_gateway.html', user=user, amount=amount, discount=discount_amt,
+                               taxes=taxes_amt, net=net_amt)
+
+
+@app.route('/payment/checkout', methods=['GET', 'POST'])
+@is_logged_in()
+def product_checkout():
+    user_id = session.get('user_id')
+    user = coll.users.find_one({'_id': user_id})
+
+    if request.method == 'GET':
+        raise CustomError('Method Not Allowed', 405, 'The payment checkout requires POST request.')
+    elif request.method == 'POST':
+        if user:
+            total_cost = 0
+
+            for item in user['cart']:
+                total_cost += item['price'] * item['qty']
+
+            total_cost = round(total_cost, 2)
+            taxes = round(total_cost * 0.07, 2)
+            net_cost = round(total_cost + taxes, 2)
+
+            w_flag = True
+            if user['wallet'] < net_cost:
+                w_flag = False
+
+            return render_template('payment/payment_gateway.html', user=user, total=total_cost, tax=taxes, net=net_cost,
+                                   iswallet=w_flag)
         else:
-            verification_token = str(uuid.uuid4())
-            expiry_time = datetime.utcnow() + timedelta(minutes=10)
-
-            # Update the credentials collection with the verification token and expiry time
-            coll.credentials.update_one({'_id': email}, {
-                '$set': {'verification_token': verification_token, 'expiry_time': expiry_time}})
-
-            # Send email to update password
-            email_sender.update_password_email(email, verification_token)
-
-            return jsonify({'success': 'true'})
-
-
-@app.route('/update_password/<verification_token>', methods=['GET', 'POST'])
-def update_password(verification_token):
-    user = coll.credentials.find_one({'verification_token': verification_token})
-    if user:
-        expiry_time = user.get('expiry_time')
-        if expiry_time is not None and expiry_time < datetime.utcnow():
-            # Token has expired
-            raise CustomError('Bad Request', 400, 'Verification token has expired!')
-        else:
-            # Token is valid, allow user to update password
-            if request.method == 'GET':
-                return render_template('users/auth/enter_new_password.html')
-            elif request.method == 'POST':
-                new_password = request.json['password']
-
-                coll.credentials.update_one({'_id': user['_id']},
-                                            {'$set': {'password': new_password}, '$unset': {'verification_token': ""}})
-
-                return jsonify({'success': 'true'})
-    else:
-        raise CustomError('Bad Request', 400, 'Invalid verification token!')
-
-
-@app.route('/user/dashboard/account', methods=['GET', 'POST'])
-@is_logged_in()
-def update_user_info():
-    user_id = session.get('user_id')
-    user = coll.users.find_one({'_id': user_id})
-
-    if request.method == 'GET':
-        return render_template('users/gui/user_account.html', user=user)
-    elif request.method == 'POST':
-        user_updates = request.json
-
-        if 'name' in user_updates and 'mobile' in user_updates:
-            name = user_updates.get('name')
-            mobile = user_updates.get('mobile')
-
-            coll.users.update_one({'_id': user_id}, {'$set': dict(name=name, alias=name.split()[0], mobile=mobile)})
-
-            return jsonify(success=True)
-        elif 'password' in user_updates and len(request.json['password']) > 0:
-            password = user_updates.get('password')
-            current_password = coll.credentials.find_one({'_id': user_id})['password']
-            if password != current_password:
-                coll.credentials.update_one({'_id': user_id}, {'$set': {'password': password}})
-            else:
-                return jsonify({'success': 'false', 'error': 'New password should be different from previous password'})
-
-            return jsonify(success=True)
-
-
-@app.route('/user/dashboard/payments', methods=['GET', 'POST', 'DELETE'])
-@is_logged_in()
-def update_user_card():
-    user_id = session.get('user_id')
-    user = coll.users.find_one({'_id': user_id})
-
-    if request.method == 'GET':
-        return render_template('users/gui/user_card.html', user=user)
-    elif request.method == 'POST':
-        user_updates = request.json
-        card_number = user_updates.get('number')
-
-        # Check if card already exists in user's card list
-        if any(card.get('_id') == card_number for card in user.get('card', [])):
-            return '', 400
-
-        # Add new card to user's card list
-        new_card = {
-            '_id': card_number,
-            'name': user_updates.get('username'),
-            'type': user_updates.get('type'),
-            'expiry': user_updates.get('exp'),
-            'cvv': user_updates.get('cvv')
-        }
-        coll.users.update_one({'_id': user_id}, {'$push': {'card': new_card}})
-
-        return jsonify({'success': 'true'})
-    elif request.method == 'DELETE':
-        user_updates = request.json
-        card_number = user_updates.get('cardNumber')
-        coll.users.update_one({'_id': user_id}, {'$pull': {'card': {'_id': str(card_number)}}})
-
-        return jsonify({'success': True})
-
-
-@app.route('/user/dashboard/order-history')
-@is_logged_in()
-def order_hist():
-    user_id = session.get('user_id')
-    user = coll.users.find_one({'_id': user_id})
-
-    transactions = coll.orderTransaction.find({'user': user_id})
-    transactions_list = []
-
-    for transaction in transactions:
-        transactions_list.append(transaction)
-
-    transactions_list.reverse()
-    transactions_list = transactions_list[:10]
-
-    return render_template('users/gui/user_order.html', user=user, transactions=transactions_list)
+            raise CustomError('Page Not Found', 404, 'Page Not Found')
 
 
 @app.errorhandler(CustomError)
