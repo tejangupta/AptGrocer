@@ -75,10 +75,10 @@
                                         </div>
 
                                         <div class="col-md-1">
-                                            <input id="quantity-{{ product.product_id }}" type="text" onblur="updateQty('{{ product.product_id }}')" class="form-control" onfocus="saveQty('{{ product.product_id }}')" value="{{ product.qty }}" maxlength="1"/>
+                                            <input id="quantity-{{ product._id }}" type="text" onblur="updateQty('{{ product._id }}')" class="form-control" onfocus="saveQty('{{ product._id }}')" value="{{ product.qty }}" maxlength="1"/>
 
                                                 <script>
-                                                    const inputElement = document.getElementById('quantity-{{ product.product_id }}');
+                                                    const inputElement = document.getElementById('quantity-{{ product._id }}');
                                                     inputElement.addEventListener('keypress', (event) => {
                                                         const charCode = event.key;
                                                         if (charCode < '0' || charCode > '9') {
@@ -96,12 +96,12 @@
                                         </div>
 
                                         <div class="col-md-1">
-                                            <i class="fa fa-trash delete" onclick="deleteCartItem('{{ product.product_id }}');" title="Delete"></i>
+                                            <i class="fa fa-trash delete" onclick="deleteCartItem('{{ product._id }}');" title="Delete"></i>
                                         </div>
 
                                     </div>
 
-                                    <input type="text" class="form-control hidden" id="quant-{{ product.product_id }}" disabled/>
+                                    <input type="text" class="form-control hidden" id="quant-{{ product._id }}" disabled/>
                                 {% endfor %}
                             {% else %}
                                 <div class="row">

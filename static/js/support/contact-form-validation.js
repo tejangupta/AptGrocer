@@ -12,7 +12,7 @@ $(document).ready(function() {
 
 		if (name.length > 0 && email.length > 0 && contact.length > 0 && desp.length) {
 			if (regex.test(email)) {
-				if(contact.length == 10) {
+				if(contact.length === 10) {
 					const formData = {
 						name: name,
 						email: email,
@@ -21,7 +21,7 @@ $(document).ready(function() {
 					}
 					
 					$.ajax({
-						url: "/support/contact-us/",
+						url: "/support/contact-us",
 						type: "POST",
 						dataType: "json",
 						data: JSON.stringify(formData),

@@ -4,6 +4,15 @@
     Checkout
 {% endblock %}
 
+{% block styles %}
+    {{ super() }}
+    <style>
+        #my-footer {
+            margin-top: 250px;
+        }
+    </style>
+{% endblock %}
+
 {% block body %}
     <!-- stylesheet -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/payment/payment-gateway.css') }}">
@@ -186,7 +195,7 @@
                                                 </div -->
                                                 <div class="col-md-12">
                                                     <div class="row" style="text-align: center;">
-                                                        {% if iswallet %}
+                                                        {% if isWallet %}
                                                             <div class="col-md-12">
                                                                 <p class="msg">
                                                                     Wallet Balance

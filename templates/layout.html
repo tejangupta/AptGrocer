@@ -165,12 +165,12 @@
                                             <script>
                                                 const mobileInput = document.getElementById('contact-mobile');
 
-                                                mobileInput.addEventListener('keypress', (event) => {
-                                                    const keyCode = event.key;
-                                                    const isNumeric = keyCode >= 48 && keyCode <= 57;
+                                                mobileInput.addEventListener('input', (event) => {
+                                                    const inputValue = event.target.value;
+                                                    const numericValue = inputValue.replace(/\D/g, '');
 
-                                                    if (!isNumeric) {
-                                                        event.preventDefault();
+                                                    if (inputValue !== numericValue) {
+                                                        event.target.value = numericValue;
                                                     }
                                                 });
                                             </script>

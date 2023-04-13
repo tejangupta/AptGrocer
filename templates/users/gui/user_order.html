@@ -84,17 +84,17 @@
                                         </div>
 
                                         <div class="col-md-1">
-                                            {{ formatDate(transaction.date, day="numeric", month="long", year="numeric") }}
+                                            {{ transaction.date.strftime('%d %B %Y') }}
                                         </div>
 
                                         <div class="col-md-6">
-                                            {% for item in items %}
+                                            {% for item in transaction['items'] %}
                                                 <ul>
                                                     <li>
-                                                        {{ item.title }}.<br>
-                                                        Price: <i class="fa fa-dollar"></i>{{ item.price }} &nbsp;&nbsp;&nbsp;
-                                                        Qty: {{ item.qty }} &nbsp;&nbsp;&nbsp;
-                                                        Total: <i class="fa fa-dollar"></i>{{ item.total }}
+                                                        {{ item['title'] }}.<br>
+                                                        Price: <i class="fa fa-dollar"></i>{{ item['price'] }} &nbsp;&nbsp;&nbsp;
+                                                        Qty: {{ item['qty'] }} &nbsp;&nbsp;&nbsp;
+                                                        Total: <i class="fa fa-dollar"></i>{{ item['total'] }}
                                                     </li>
                                                 </ul>
                                             {% endfor %}

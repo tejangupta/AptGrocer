@@ -95,8 +95,19 @@
                                             </div>
                                             <div class="col-md-7">
                                                 <i class="fa fa-dollar add-amount"></i>
-                                                <input type="text" class="form-control add-amount" name="amount" id="amount" oninput="return (event.target.value.length < 1 || !isNaN(parseFloat(event.target.value))) && (event.target.value.split('.').length <= 2)" placeholder="Enter amount to add"/>
+                                                <input type="text" class="form-control add-amount" name="amount" id="amount" placeholder="Enter amount to add"/>
                                             </div>
+
+                                            <script>
+                                                const amountInput = document.querySelector('#amount');
+                                                amountInput.addEventListener('keypress', function(event) {
+                                                    const charCode = event.charCode;
+                                                    if (charCode !== 46 && (charCode < 48 || charCode > 57)) {
+                                                        event.preventDefault();
+                                                    }
+                                                });
+                                            </script>
+
                                         </div>
 
                                         <!-- card select section -->

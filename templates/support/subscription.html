@@ -1,0 +1,77 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Subscription Status
+{% endblock %}
+
+{% block styles %}
+    {{ super() }}
+    <style>
+        #my-footer {
+            margin-top: 370px;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <!-- stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/support/subscription.css') }}">
+
+    <!-- body -->
+    <div class="subscription">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8 col-md-offset-2">
+
+                    {% if status %}
+                        <article>
+                            <h1>You are signed up for our newsletters!</h1>
+
+                            <div class="row">
+                                <h2>
+                                    If you want to stop receiving our newsletters.
+                                    Click <a href="#" onclick="unsubscribe()">Unsubscribe</a>.
+                                </h2>
+                            </div>
+
+                        </article>
+                    {% elif anonymous %}
+                        <article>
+                            <h1>You are signed up for our newsletters!</h1>
+
+                            <div class="row">
+                                <h2>
+                                    Login if you want to stop receiving our newsletters.
+                                </h2>
+                            </div>
+
+                        </article>
+                    {% else %}
+                        <article>
+                            <h1>Oh! you are not subscribed to our newsletters.</h1>
+
+                            <div class="row">
+                                <h2>
+                                    If you want to receive our newsletters.
+                                    {% if user %}
+                                        Fill the form below to subscribe.
+                                    {% endif %}
+                                </h2>
+                            </div>
+                        </article>
+                    {% endif %}
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if status %}
+        <script>
+            function unsubscribe() {
+                document.getElementById("form-unsubscribe-it").submit();
+            }
+        </script>
+        <form method="post" action="/support/subscription/unsubscribe" id="form-unsubscribe-it"></form>
+    {% endif %}
+{% endblock %}

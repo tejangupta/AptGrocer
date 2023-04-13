@@ -2,6 +2,8 @@ from flask import Flask, render_template, request, redirect, url_for, jsonify, s
 from datetime import datetime, timedelta
 import uuid
 import pymongo
+from bson import ObjectId
+from pymongo.errors import CollectionInvalid
 import config.mongo_coll as coll
 from config.auth import is_logged_in, EmailSender
 from config.exception import CustomError
@@ -12,8 +14,9 @@ app.secret_key = 'my_super__secret_key'
 email_sender = EmailSender()
 
 
-@app.route('/')
-def index():
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def index(path):
     prods = coll.products.find()
 
     if session.get('user_id'):
@@ -27,41 +30,49 @@ def index():
 
 @app.route('/product/id/<product_id>')
 def product(product_id):
-    prod = coll.products.find_one({'_id': product_id})
+    try:
+        prod = coll.products.find_one({'_id': product_id})
 
-    if not prod:
-        raise CustomError('Page Not Found', 404, 'Product does not exist!')
+        if not prod:
+            raise CustomError('Page Not Found', 404, 'Product does not exist!')
 
-    if session.get('user_id'):
-        user_id = session.get('user_id')
-        user = coll.users.find_one({'_id': user_id})
+        if session.get('user_id'):
+            user_id = session.get('user_id')
+            user = coll.users.find_one({'_id': user_id})
 
-        return render_template('product/product_info.html', product=prod, user=user)
-    else:
-        return render_template('product/product_info.html', product=prod)
+            return render_template('product/product_info.html', product=prod, user=user)
+        else:
+            return render_template('product/product_info.html', product=prod)
+    except Exception:
+        raise CustomError('Page Not Found', 404, 'Page Not Found')
 
 
 @app.route('/product/category/<category>')
 def products_by_category(category):
-    product_results = coll.products.find({'category': category.capitalize()})
+    try:
+        product_results = coll.products.find({'category': category.capitalize()})
 
-    if session.get('user_id'):
-        user_id = session['user_id']
-        user = coll.users.find_one({'_id': user_id})
+        if session.get('user_id'):
+            user_id = session['user_id']
+            user = coll.users.find_one({'_id': user_id})
 
-        if product_results:
-            return render_template("product/product_category_results.html",
-                                   mainTitle=f"{product_results[0]['category']} Products", user=user,
-                                   products=product_results, category=category)
+            if product_results:
+                return render_template("product/product_category_results.html",
+                                       mainTitle=f"{product_results[0]['category']} Products", user=user,
+                                       products=product_results, category=category)
+            else:
+                raise CustomError('Page Not Found', 404,
+                                  f'Your search did not match any products in {category} category')
         else:
-            raise CustomError('Page Not Found', 404, f'Your search did not match any products in {category} category')
-    else:
-        if product_results:
-            return render_template("product/product_category_results.html",
-                                   mainTitle=f"{product_results[0]['category']} Products",
-                                   products=product_results, category=category)
-        else:
-            raise CustomError('Page Not Found', 404, f'Your search did not match any products in {category} category')
+            if product_results:
+                return render_template("product/product_category_results.html",
+                                       mainTitle=f"{product_results[0]['category']} Products",
+                                       products=product_results, category=category)
+            else:
+                raise CustomError('Page Not Found', 404,
+                                  f'Your search did not match any products in {category} category')
+    except Exception:
+        raise CustomError('Page Not Found', 404, 'Page Not Found')
 
 
 @app.route("/product/search")
@@ -69,26 +80,29 @@ def product_search():
     keyword = request.args.get('keyword')
 
     if keyword:
-        coll.products.create_index([('title', 'text'), ('description', 'text')])
-        product_search = coll.products.find({'$text': {'$search': keyword}})
+        try:
+            coll.products.create_index([('title', 'text'), ('description', 'text')])
+            product_search = coll.products.find({'$text': {'$search': keyword}})
 
-        if session.get('user_id'):
-            user_id = session['user_id']
-            user = coll.users.find_one({'_id': user_id})
+            if session.get('user_id'):
+                user_id = session['user_id']
+                user = coll.users.find_one({'_id': user_id})
 
-            if product_search:
-                return render_template("product/product_search_results.html", user=user,
-                                       mainTitle=f'{keyword}',
-                                       products=product_search, keyword=keyword)
+                if product_search:
+                    return render_template("product/product_search_results.html", user=user,
+                                           mainTitle=f'{keyword}',
+                                           products=product_search, keyword=keyword)
+                else:
+                    raise CustomError('Page Not Found', 404, 'Your search did not match any products.')
             else:
-                raise CustomError('Page Not Found', 404, 'Your search did not match any products.')
-        else:
-            if product_search:
-                return render_template("product/product_search_results.html",
-                                       mainTitle=f'{keyword}',
-                                       products=product_search, keyword=keyword)
-            else:
-                raise CustomError('Page Not Found', 404, 'Your search did not match any products.')
+                if product_search:
+                    return render_template("product/product_search_results.html",
+                                           mainTitle=f'{keyword}',
+                                           products=product_search, keyword=keyword)
+                else:
+                    raise CustomError('Page Not Found', 404, 'Your search did not match any products.')
+        except Exception:
+            raise CustomError('Page Not Found', 404, 'Page Not Found')
     else:
         return redirect('/')
 
@@ -100,21 +114,24 @@ def product_filter_search():
         start_range = float(request.json['startRange'])
         end_range = float(request.json['endRange'])
 
-        filtered_products = coll.products.find({
-            '$and': [
-                {'$or': [
-                    {'title': {'$regex': search, '$options': 'i'}},
-                    {'description': {'$regex': search, '$options': 'i'}}
-                ]},
-                {'price': {'$gte': start_range}},
-                {'price': {'$lte': end_range}}
-            ]
-        })
+        try:
+            filtered_products = coll.products.find({
+                '$and': [
+                    {'$or': [
+                        {'title': {'$regex': search, '$options': 'i'}},
+                        {'description': {'$regex': search, '$options': 'i'}}
+                    ]},
+                    {'price': {'$gte': start_range}},
+                    {'price': {'$lte': end_range}}
+                ]
+            })
 
-        if filtered_products:
-            return jsonify({'empty': False, 'product': list(filtered_products)})
-        else:
-            return jsonify({'empty': True})
+            if filtered_products:
+                return jsonify({'empty': False, 'product': list(filtered_products)})
+            else:
+                return jsonify({'empty': True})
+        except Exception as e:
+            raise CustomError('Server Error', 500, e)
 
 
 @app.route('/product/filter', methods=['POST'])
@@ -123,18 +140,22 @@ def product_filter():
         category = request.json['category']
         start_range = float(request.json['startRange'])
         end_range = float(request.json['endRange'])
-        filtered_products = coll.products.find({
-            '$and': [
-                {'category': category.capitalize()},
-                {'price': {'$gte': start_range}},
-                {'price': {'$lte': end_range}}
-            ]
-        })
 
-        if filtered_products:
-            return jsonify({'empty': False, 'product': list(filtered_products)})
-        else:
-            return jsonify({'empty': True})
+        try:
+            filtered_products = coll.products.find({
+                '$and': [
+                    {'category': category.capitalize()},
+                    {'price': {'$gte': start_range}},
+                    {'price': {'$lte': end_range}}
+                ]
+            })
+
+            if filtered_products:
+                return jsonify({'empty': False, 'product': list(filtered_products)})
+            else:
+                return jsonify({'empty': True})
+        except Exception as e:
+            raise CustomError('Server Error', 500, e)
 
 
 # Route to render the create new user form and create new user into database
@@ -224,7 +245,9 @@ def login():
 @app.route('/user/forget-password', methods=['GET', 'POST'])
 def forget_password():
     if request.method == 'GET':
-        return render_template('users/auth/user_forget_password.html')
+        if not session.get('user_id'):
+            return render_template('users/auth/user_forget_password.html')
+        raise CustomError('Page Not Found', 404, 'Page Not Found')
     elif request.method == 'POST':
         email = request.json['email'].lower()
 
@@ -358,7 +381,7 @@ def order_hist():
     user_id = session.get('user_id')
     user = coll.users.find_one({'_id': user_id})
 
-    transactions_list = list(coll.orderTransaction.find({'user': user['_id']}).sort('_id', -1).limit(10))
+    transactions_list = list(coll.orderTransaction.find({'user': user_id}).sort('_id', -1).limit(10))
 
     return render_template('users/gui/user_order.html', user=user, transactions=transactions_list)
 
@@ -379,7 +402,7 @@ def update_cart(product_id, loc):
             raise CustomError('Page Not Found', 404, 'Product does not exist!')
 
         cart_item = {
-            'product_id': product_id,
+            '_id': product_id,
             'title': product['title'],
             'description': product['description'],
             'size': product['size'],
@@ -392,7 +415,7 @@ def update_cart(product_id, loc):
         # Check if the item is already in cart
         product_in_cart = False
         for item in user.get('cart', []):
-            if item['product_id'] == product_id:
+            if item['_id'] == product_id:
                 product_in_cart = True
                 break
 
@@ -421,14 +444,14 @@ def update_cart_quantity():
         if quantity < 1 or quantity > 5:
             return jsonify(success=False)
 
-        cart_item = coll.users.find_one({'_id': user_id, 'cart.product_id': prod_id}, {'cart.$': 1})['cart'][0]
+        cart_item = coll.users.find_one({'_id': user_id, 'cart._id': prod_id}, {'cart.$': 1})['cart'][0]
 
         if cart_item is None:
             raise CustomError('Bad Request', 400, 'Invalid product id')
 
         total_cost = quantity * cart_item['price']
         coll.users.update_one(
-            {'_id': user_id, 'cart.product_id': prod_id},
+            {'_id': user_id, 'cart._id': prod_id},
             {'$set': {'cart.$.qty': quantity, 'cart.$.total': total_cost}},
             upsert=True
         )
@@ -442,12 +465,12 @@ def update_cart_quantity():
         return jsonify(success=True)
     elif request.method == 'DELETE':
         prod_id = request.json['id']
-        cart_item = coll.users.find_one({'_id': user_id, 'cart.product_id': prod_id}, {'cart.$': 1})['cart'][0]
+        cart_item = coll.users.find_one({'_id': user_id, 'cart._id': prod_id}, {'cart.$': 1})['cart'][0]
 
         if cart_item is None:
             raise CustomError('Bad Request', 400, 'Invalid product id')
 
-        coll.users.update_one({'_id': user_id}, {'$pull': {'cart': {'product_id': prod_id}}})
+        coll.users.update_one({'_id': user_id}, {'$pull': {'cart': {'_id': prod_id}}})
 
         user = coll.users.find_one({'_id': user_id})
 
@@ -484,12 +507,12 @@ def user_wallet():
     user = coll.users.find_one({'_id': user_id})
 
     if request.method == 'GET':
-        wallet_transactions = coll.walletTransaction.find({'user': user['_id']}).sort('date', pymongo.DESCENDING).limit(
+        wallet_transactions = coll.walletTransaction.find({'user': user_id}).sort('date', pymongo.DESCENDING).limit(
             10)
 
         return render_template('users/gui/user_wallet.html', user=user, transactions=wallet_transactions)
     elif request.method == 'POST':
-        amount = request.json['amount']
+        amount = int(request.json['amount'])
 
         if not amount:
             raise CustomError('Bad Request', 400, 'No amount provided')
@@ -499,6 +522,94 @@ def user_wallet():
 
         return render_template('payment/add_cash_payment_gateway.html', user=user, amount=amount, discount=discount_amt,
                                taxes=taxes_amt, net=net_amt)
+
+
+@app.route('/user/update/wallet', methods=['PUT', 'POST'])
+@is_logged_in()
+def update_wallet():
+    user_id = session.get('user_id')
+    user = coll.users.find_one({'_id': user_id})
+
+    if request.method == 'PUT':
+        amount = request.json['amount']
+        card_used = request.json['cardUsed']
+        status = request.json['action']
+        remark = request.json['description']
+
+        card_info = coll.users.find_one({'_id': user_id, 'card._id': card_used}, {'card.$': 1})
+
+        card_data = {
+            'name': card_info['card'][0]['name'],
+            'number': card_info['card'][0]['_id'],
+            'type': card_info['card'][0]['type'],
+            'expiry': card_info['card'][0]['expiry'],
+            'cvv': card_info['card'][0]['cvv']
+        }
+
+        wallet_info = coll.users.update_one(
+            {'_id': user_id},
+            {'$inc': {'wallet': int(amount)}}
+        )
+        if wallet_info.modified_count == 0:
+            return jsonify(data=False)
+
+        transaction = {
+            'user': user_id,
+            'amount': amount,
+            'cardDetails': card_data,
+            'date': datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT'),
+            'status': status,
+            'isCredited': True,
+            'remark': remark
+        }
+        coll.walletTransaction.insert_one(transaction)
+
+        user = coll.users.find_one({'_id': user_id})
+        transactions_list = coll.walletTransaction.find({'user': user_id}).sort('date', pymongo.DESCENDING).limit(10)
+
+        data = {
+            'amount': user['wallet'],
+            'success': True,
+            'transactions': [
+                {str(k): str(v) if isinstance(v, ObjectId) else v for k, v in transaction.items()}
+                for transaction in transactions_list
+            ]
+        }
+
+        return jsonify(data)
+    elif request.method == 'POST':
+        amount = request.json['amount']
+
+        card_data = {
+            'name': request.json['cardName'],
+            'number': request.json['cardNumber'],
+            'type': request.json['cardType'],
+            'expiry': f"{request.json['cardMonth']}/{request.json['cardYear']}",
+            'cvv': request.json['cardCVV']
+        }
+        status = "Credit"
+        remark = "Added cash in wallet"
+
+        wallet_info = coll.users.update_one(
+            {'_id': user_id},
+            {'$inc': {'wallet': int(amount)}}
+        )
+        if wallet_info.modified_count == 0:
+            raise CustomError('Bad Request', 400, 'Total wallet limit exceed. Maximum $10000 are allowed.')
+
+        transaction = {
+            'user': user_id,
+            'amount': amount,
+            'cardDetails': card_data,
+            'date': datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT'),
+            'status': status,
+            'isCredited': True,
+            'remark': remark
+        }
+        coll.walletTransaction.insert_one(transaction)
+
+        return render_template('payment/payment_confirmation.html', user=user, redirectURL='/user/dashboard/wallet',
+                               amount=amount, transactionId=str(transaction['_id']))
 
 
 @app.route('/payment/checkout', methods=['GET', 'POST'])
@@ -521,13 +632,285 @@ def product_checkout():
             net_cost = round(total_cost + taxes, 2)
 
             w_flag = True
-            if user['wallet'] < net_cost:
+            if user.get('wallet', 0) < net_cost:
                 w_flag = False
 
             return render_template('payment/payment_gateway.html', user=user, total=total_cost, tax=taxes, net=net_cost,
-                                   iswallet=w_flag)
+                                   isWallet=w_flag)
         else:
             raise CustomError('Page Not Found', 404, 'Page Not Found')
+
+
+@app.route('/payment/gateway/saved', methods=['POST'])
+@is_logged_in()
+def saved_card_payment():
+    user_id = session.get('user_id')
+    user = coll.users.find_one({'_id': user_id})
+
+    if request.method == 'POST':
+        card_number = request.form['savedCard']
+        amount = request.form['amount']
+        card = None
+
+        for c in user['card']:
+            if c['_id'] == card_number:
+                card = c
+                break
+
+        if not card:
+            raise CustomError('Bad Request', 400, 'Invalid Card')
+
+        cart_items = []
+        for item in user['cart']:
+            cart_items.append({
+                '_id': item['_id'],
+                'title': item['title'],
+                'qty': item['qty'],
+                'price': item['price'],
+                'total': item['total']
+            })
+
+        if not cart_items:
+            raise CustomError('Bad Request', 400, 'No Items in cart')
+
+        try:
+            # Log transaction
+            trans_id = coll.orderTransaction.insert_one({
+                'user': user['_id'],
+                'amount': amount,
+                'card': card,
+                'items': cart_items,
+                'payMode': 'Saved Card',
+                'date': datetime.utcnow()
+            }).inserted_id
+
+            # empty cart
+            coll.users.update_one({'_id': user['_id']}, {'$set': {'cart': [], 'cartLen': 0}})
+
+            return render_template('payment/payment_confirmation.html', user=user, redirectURL='/user/dashboard/cart',
+                                   amount=amount, orderId=trans_id)
+        except Exception as e:
+            raise CustomError('Server Error', 500, e)
+
+
+@app.route('/payment/gateway/new', methods=['POST'])
+@is_logged_in()
+def new_card_payment():
+    user_id = session.get('user_id')
+    user = coll.users.find_one({'_id': user_id})
+
+    if request.method == 'POST':
+        # Validate new card information
+        user_updates = request.form
+        amount = request.form['amount']
+
+        if not user_updates or not user_updates.get('cardName') or not user_updates.get('cardNumber') \
+                or not user_updates.get('cardType') or not user_updates.get('expMonth') or not user_updates.get(
+            'expYear') \
+                or not user_updates.get('cardCVV'):
+            raise CustomError('Forbidden', 403, 'Invalid payment information')
+
+        card_data = {
+            'number': user_updates['cardNumber'],
+            'name': user_updates['cardName'],
+            'type': user_updates['cardType'],
+            'expiry': user_updates['expMonth'] + '/' + user_updates['expYear'],
+            'cvv': user_updates['cardCVV']
+        }
+
+        cart_items = []
+        for item in user['cart']:
+            cart_items.append({
+                '_id': item['_id'],
+                'title': item['title'],
+                'qty': item['qty'],
+                'price': item['price'],
+                'total': item['total']
+            })
+
+        if not cart_items:
+            raise CustomError('Bad Request', 400, 'No Items in cart')
+
+        try:
+            # Log transaction
+            trans_id = coll.orderTransaction.insert_one({
+                'user': user['_id'],
+                'amount': amount,
+                'card': card_data,
+                'items': cart_items,
+                'payMode': 'New Card',
+                'date': datetime.utcnow()
+            }).inserted_id
+
+            # empty cart
+            coll.users.update_one({'_id': user['_id']}, {'$set': {'cart': [], 'cartLen': 0}})
+
+            return render_template('payment/payment_confirmation.html', user=user, redirectURL='/user/dashboard/cart',
+                                   amount=amount, orderId=trans_id)
+        except Exception as e:
+            raise CustomError('Server Error', 500, e)
+
+
+@app.route('/payment/gateway/wallet', methods=['POST'])
+@is_logged_in()
+def wallet_payment():
+    user_id = session.get('user_id')
+    user = coll.users.find_one({'_id': user_id})
+
+    if request.method == 'POST':
+        amount = float(request.form['amount'])
+
+        cart_items = []
+        for item in user['cart']:
+            cart_items.append({
+                '_id': item['_id'],
+                'title': item['title'],
+                'qty': item['qty'],
+                'price': item['price'],
+                'total': item['total']
+            })
+
+        if not cart_items:
+            raise CustomError('Bad Request', 400, 'No Items in cart')
+
+        try:
+            # Log transaction
+            trans_id = coll.orderTransaction.insert_one({
+                'user': user['_id'],
+                'amount': str(amount),
+                'card': {},
+                'items': cart_items,
+                'payMode': 'Wallet',
+                'date': datetime.utcnow()
+            }).inserted_id
+
+            # empty cart
+            coll.users.update_one({'_id': user['_id']}, {'$set': {'cart': [], 'cartLen': 0}})
+
+            # Deduct amount from wallet
+            wallet = coll.users.find_one({'_id': user['_id']}, {'_id': 0, 'wallet': 1})['wallet']
+
+            if wallet < amount:
+                raise CustomError('Payment Failed', 400, 'Insufficient Balance in Wallet')
+            else:
+                new_wallet_balance = round((wallet - amount), 2)
+
+            coll.walletTransaction.insert_one({
+                'user': user['_id'],
+                'amount': str(amount),
+                'cardDetails': {},
+                'date': datetime.utcnow(),
+                'status': 'Debit',
+                'isCredited': False,
+                'remark': 'Purchase Order#' + str(trans_id)
+            })
+
+            coll.users.update_one({'_id': user['_id']}, {'$set': {'wallet': new_wallet_balance}})
+
+            # Render success page
+            return render_template('payment/payment_confirmation.html', user=user,
+                                   redirectURL='/user/dashboard/cart', amount=amount, orderId=trans_id)
+        except CustomError as e:
+            raise CustomError('Server Error', 500, e)
+
+
+@app.route('/support/contact-us', methods=['POST'])
+def contact_us():
+    if request.method == 'POST':
+        sender_info = {
+            'name': request.json['name'],
+            'email': request.json['email'],
+            'mobile': request.json['mobile'],
+            'description': request.json['description']
+        }
+
+        contact = {
+            'name': sender_info['name'],
+            'email': sender_info['email'],
+            'mobile': sender_info['mobile'],
+            'description': sender_info['description'],
+            'contactedDate': datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT')
+        }
+
+        # inserting the document into MongoDB collection
+        try:
+            coll.contacts.insert_one(contact)
+            return jsonify({'success': 'true'})
+        except CollectionInvalid:
+            raise CustomError('Server Error', 500, 'collectionError')
+
+
+@app.route('/support/subscription/status')
+@is_logged_in()
+def subscription_status():
+    try:
+        user_id = session.get('user_id')
+        user = coll.users.find_one({'_id': user_id})
+
+        # search for subscription record by user ID
+        subscription = coll.subscriptions.find_one({'_id': user_id})
+
+        # if subscription record exists, render template with status, otherwise render with status=False
+        if subscription:
+            return render_template('support/subscription.html', user=user, status=subscription['activeStatus'])
+        else:
+            return render_template('support/subscription.html', user=user, status=False)
+    except Exception:
+        raise CustomError('Page Not Found', 404, 'Page Not Found')
+
+
+@app.route('/support/subscription/status/<email>')
+def subscription_status_anonymous(email):
+    try:
+        user_id = session.get('user_id')
+        user = coll.users.find_one({'_id': user_id})
+
+        # If anonymous user is logged in as themselves, redirect to their own subscription status
+        if user and email == user_id:
+            return redirect('/support/subscription/status')
+
+        # Search for subscription record by email
+        subscription = coll.subscriptions.find_one({'_id': email})
+
+        # If subscription record exists, render template with status, otherwise render with status=False
+        if subscription:
+            return render_template('support/subscription.html', anonymous=True)
+        else:
+            return render_template('support/subscription.html', anonymous=False)
+    except Exception:
+        raise CustomError('Page Not Found', 404, 'Page Not Found')
+
+
+@app.route('/support/subscription/subscribe', methods=['POST'])
+def subscribe():
+    if request.method == 'POST':
+        email = request.json['email']
+
+        try:
+            subscription = coll.subscriptions.find_one({'_id': email})
+
+            if subscription is None:
+                coll.subscriptions.insert_one({'_id': email, 'activeStatus': True})
+            else:
+                coll.subscriptions.update_one({'_id': email}, {'$set': {'activeStatus': True}})
+
+            return jsonify({'email': email})
+        except CollectionInvalid:
+            raise CustomError('Server Error', 500, 'collectionError')
+
+
+@app.route('/support/subscription/unsubscribe', methods=['POST'])
+def unsubscribe():
+    if request.method == 'POST':
+        email = session.get('user_id')
+
+        # Updating a record
+        try:
+            coll.subscriptions.update_one({'_id': email}, {'$set': {'activeStatus': False}})
+
+            return redirect(url_for('subscription_status'))
+        except CollectionInvalid:
+            raise CustomError('Server Error', 500, 'collectionError')
 
 
 @app.errorhandler(CustomError)
