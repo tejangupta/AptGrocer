@@ -4,6 +4,10 @@ It is built using the Flask web framework and MongoDB Atlas database.
 The application allows users to manage their grocery shopping experience by creating and tracking grocery lists,
 adding and removing items, and keeping track of expenses for each list.
 
+### Demo
+
+https://user-images.githubusercontent.com/89571912/235176676-b7b4d164-269e-4e0c-8c52-34dbc20ce54a.mp4
+
 ### Technologies Used
 **Frontend Languages**: HTML, CSS and Client-Side JavaScript<br>
 **Frontend Framework**: Bootstrap<br>
