@@ -6,7 +6,7 @@ adding and removing items, and keeping track of expenses for each list.
 
 ### Demo
 
-https://user-images.githubusercontent.com/89571912/235176676-b7b4d164-269e-4e0c-8c52-34dbc20ce54a.mp4
+https://user-images.githubusercontent.com/89571912/235189191-2d2a037d-ab25-4795-8d8d-4d0614e7a2c7.mp4
 
 ### Technologies Used
 **Frontend Languages**: HTML, CSS and Client-Side JavaScript<br>
