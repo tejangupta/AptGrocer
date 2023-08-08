@@ -8,7 +8,9 @@ import config.mongo_coll as coll
 from config.auth import is_logged_in, EmailSender
 from config.exception import CustomError
 
-app = Flask(__name__)
+application = Flask(__name__)
+app = application
+
 app.secret_key = 'my_super__secret_key'
 
 email_sender = EmailSender()
