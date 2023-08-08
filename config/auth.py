@@ -3,13 +3,10 @@ import os
 from email.mime.text import MIMEText
 from functools import wraps
 from flask import redirect, session, url_for
-from dotenv import load_dotenv
 
 
 class EmailSender:
     def __init__(self):
-        base_dir = os.path.abspath(os.path.dirname(__file__))
-        load_dotenv(os.path.join(base_dir, 'mail.env'))
         self.sender = os.environ.get('MY_EMAIL')
         self.password = os.environ.get('MY_PASSWORD')
 
