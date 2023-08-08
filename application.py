@@ -160,7 +160,7 @@ def product_filter():
             raise CustomError('Server Error', 500, e)
 
 
-# Route to render the create new user form and create new user into database
+# Route to render the create new user form and create new user into a database
 @app.route('/user/new', methods=['GET', 'POST'])
 def create_new_user():
     if request.method == 'GET':
@@ -179,7 +179,7 @@ def create_new_user():
             # Generate verification token for new user
             verification_token = str(uuid.uuid4())
 
-            # Create new user with unverified status
+            # Create a new user with unverified status
             new_user = {
                 '_id': email,
                 'name': name,
@@ -276,7 +276,7 @@ def update_password(verification_token):
     if user:
         expiry_time = user.get('expiry_time')
         if expiry_time is not None and expiry_time < datetime.utcnow():
-            # Token has expired
+            # The Token has expired
             raise CustomError('Bad Request', 400, 'Verification token has expired!')
         else:
             # Token is valid, allow user to update password
@@ -414,14 +414,14 @@ def update_cart(product_id, loc):
             'total': product['price']
         }
 
-        # Check if the item is already in cart
+        # Check if the item is already in the cart
         product_in_cart = False
         for item in user.get('cart', []):
             if item['_id'] == product_id:
                 product_in_cart = True
                 break
 
-        # If the item is not in cart, add it and increment cartLen
+        # If the item is not in the cart, add it and increment cartLen
         if not product_in_cart:
             user.setdefault('cart', []).append(cart_item)
             user['cartLen'] = user.get('cartLen', 0) + 1
@@ -867,7 +867,7 @@ def subscription_status_anonymous(email):
         user_id = session.get('user_id')
         user = coll.users.find_one({'_id': user_id})
 
-        # If anonymous user is logged in as themselves, redirect to their own subscription status
+        # If an anonymous user is logged in as themselves, redirect to their own subscription status
         if user and email == user_id:
             return redirect('/support/subscription/status')
 
@@ -936,4 +936,4 @@ def error_handler(e):
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8000)
+    app.run(host='0.0.0.0', port=8080)
